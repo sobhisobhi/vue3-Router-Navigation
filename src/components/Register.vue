@@ -1,0 +1,176 @@
+<template>
+  <div class="card card-container">
+    RegisterPage
+    <img
+      id="profile-img"
+      src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png"
+      class="profile-img-card"
+    />
+    <Form @submit="handleRegister" :validation-schema="schema">
+      <div v-if="!successful">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <Field
+            name="username"
+            type="text"
+            placeholder="Username"
+            autocomplete="on"
+            class="form-control"
+          />
+          <ErrorMessage name="username" class="error-feedback" />
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <Field
+            name="email"
+            type="email"
+            placeholder="Email"
+            autocomplete="on"
+            class="form-control"
+          />
+          <ErrorMessage name="email" class="error-feedback" />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <Field
+            name="password"
+            type="password"
+            placeholder="Password"
+            autocomplete="on"
+            class="form-control"
+          />
+          <ErrorMessage name="password" class="error-feedback" />
+        </div>
+        <div class="form-group">
+          <label for="confirm-password">Confirm Password</label>
+          <Field
+            name="confirm-password"
+            type="password"
+            placeholder="Confirm Password"
+            autocomplete="on"
+            class="form-control"
+          />
+          <ErrorMessage name="confirm-password" class="error-feedback" />
+        </div>
+        <button
+          type="submit"
+          class="btn btn-primary btn-block"
+          :disabled="loading"
+        >
+          <span v-show="loading" class="spinner-border spinner-border-sm">
+          </span>
+          Register
+        </button>
+      </div>
+    </Form>
+    <div
+      v-if="successful"
+      class="alert"
+      :class="successful ? 'alert-success' : 'alert-danger'"
+    >
+      <strong>{{ message }}</strong>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ErrorMessage, Field, Form } from "vee-validate";
+import * as yup from "yup";
+
+export default {
+  name: "RegisterPage",
+  components: { Form, Field, ErrorMessage },
+  data() {
+    const schema = yup.object().shape({
+      username: yup
+        .string()
+        .required("Username is required")
+        .min(3, "Username must be at least 3 characters long")
+        .max(20, "Username must be maximum 20 characters!"),
+      email: yup.string().email("Invalid email").required("Email is required"),
+      password: yup
+        .string()
+        .required("Password is required")
+        .min(8, "Password must be at least 8 characters long")
+        .max(40, "Must be maximum 40 characters!"),
+    });
+    return {
+      loading: false,
+      successful: false,
+      message: "",
+      schema,
+    };
+  },
+  computed: {
+    loggedIn() {
+      return this.$store.state.auth.status.loggedIn;
+    },
+  },
+  created() {
+    if (this.loggedIn) {
+      this.$router.push("/profile");
+    }
+  },
+  methods: {
+    handleRegister(user) {
+      this.loading = true;
+      this.message = "";
+      this.successful = false;
+
+      this.$store.dispatch("auth/register", user).then(
+        (data) => {
+          this.message = data.message;
+          this.loading = false;
+          this.successful = true;
+        },
+        (error) => {
+          this.loading = false;
+          this.message =
+            error?.response?.data?.message ||
+            error.message ||
+            error.toString("Something went wrong");
+        }
+      );
+    },
+  },
+};
+</script>
+
+<style scoped>
+label {
+  display: block;
+  margin-top: 10px;
+}
+
+.card-container.card {
+  max-width: 350px !important;
+  padding: 40px 40px;
+}
+
+.card {
+  background-color: #f7f7f7;
+  padding: 20px 25px 30px;
+  margin: 0 auto 25px;
+  margin-top: 50px;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  border-radius: 2px;
+  -moz-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+  -webkit-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+}
+
+.profile-img-card {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 10px;
+  display: block;
+  -moz-border-radius: 50%;
+  -webkit-border-radius: 50%;
+  border-radius: 50%;
+}
+
+.error-feedback {
+  color: red;
+}
+</style>
